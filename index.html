@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://www.ollama.com/public/ollama.png">
+    <title>Ollama Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 50%;
+            text-align: center;
+        }
+        .response-box {
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            min-height: 50px;
+            background-color: #f9f9f9;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+        .input-box {
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 10px;
+            flex-grow: 1;
+            outline: none;
+            resize: none;
+            height: 1.5em;
+        }
+        .send-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* make text bold */
+            font-weight: bold;
+        }
+        .send-button:focus {
+            outline: none;
+        }
+        .send-button svg {
+            fill: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="input-group">
+            <input type="text" id="url" class="input-box" placeholder="Ollama URL" value="http://localhost:11434">
+        </div>
+        <div class="response-box" id="responseBox"></div>
+        <div class="input-group">
+            <textarea type="text" id="messageInput" class="input-box" placeholder="Type your message here"></textarea>
+            <button class="send-button" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script>
+        async function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            const responseBox = document.getElementById('responseBox');
+            responseBox.textContent = responseBox.textContent + "\nYou: " + message + "\n";
+            document.getElementById('messageInput').value = '';
+            document.querySelector('.send-button').style.backgroundColor = '#ccc';
+            document.querySelector('.send-button').disabled = true;
+            const url = document.getElementById('url').value + '/api/generate';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "model": "gemma:2b",
+                        "prompt": message,
+                        "stream": true
+                    })
+                });
+
+                const decoder = new TextDecoder();
+
+                responseBox.textContent = responseBox.textContent + "\nAI: ";
+                for await (const data of response.body) {
+                    const jsonData = decoder.decode(data);
+                    const chunk = JSON.parse(jsonData).response;
+                    chunk.replace(/\n/g, '');
+                    responseBox.textContent = responseBox.textContent + chunk;
+                }
+                responseBox.textContent = responseBox.textContent + "\n";
+                
+            } catch (error) {
+                responseBox.textContent = 'Error: ' + error.message;
+            }
+
+            document.querySelector('.send-button').disabled = false;
+            document.querySelector('.send-button').style.backgroundColor = '#007bff';
+        }
+    </script>
+</body>
+</html>
