@@ -11,13 +11,15 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+            /* justify-content: center; */
+            height: 80vh;
+            margin-top: 20px;
         }
         .container {
-            width: 50%;
+            width: 90%;
+            height: 80%;
             text-align: center;
+            max-width: 500px;
         }
         .response-box {
             border: 1px solid #ccc;
@@ -26,9 +28,11 @@
             margin-top: 10px;
             margin-bottom: 10px;
             min-height: 50px;
+            height: 100%;
             background-color: #f9f9f9;
             text-align: left;
             white-space: pre-wrap;
+            overflow-y: auto;
         }
         .input-group {
             display: flex;
@@ -54,7 +58,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* make text bold */
             font-weight: bold;
         }
         .send-button:focus {
@@ -72,8 +75,8 @@
         </div>
         <div class="response-box" id="responseBox"></div>
         <div class="input-group">
-            <textarea type="text" id="messageInput" class="input-box" placeholder="Type your message here"></textarea>
-            <button class="send-button" onclick="sendMessage()">Send</button>
+            <textarea type="text" id="messageInput" class="input-box" placeholder="Type your message here" onkeydown="if (event.keyCode === 13 && !event.shiftKey) { event.preventDefault(); sendMessage(); }"></textarea>
+            <button type="submit" class="send-button" onclick="sendMessage()">Send</button>
         </div>
     </div>
     <script>
