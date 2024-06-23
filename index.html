@@ -21,11 +21,14 @@
             text-align: center;
             max-width: 500px;
         }
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
         .response-box {
             border: 1px solid #ccc;
             border-radius: 20px;
             padding: 10px;
-            margin-top: 10px;
             margin-bottom: 10px;
             min-height: 50px;
             height: 100%;
@@ -34,14 +37,11 @@
             white-space: pre-wrap;
             overflow-y: auto;
         }
-        .input-group {
-            display: flex;
-            align-items: center;
-        }
         .input-box {
             border: 1px solid #ccc;
             border-radius: 20px;
             padding: 10px;
+            margin-bottom: 10px;
             flex-grow: 1;
             outline: none;
             resize: none;
@@ -53,6 +53,7 @@
             border: none;
             border-radius: 20px;
             padding: 10px 15px;
+            margin-bottom: 10px;
             margin-left: 10px;
             cursor: pointer;
             display: flex;
@@ -73,10 +74,15 @@
         <div class="input-group">
             <input type="text" id="url" class="input-box" placeholder="Ollama URL" value="http://localhost:11434">
         </div>
+        <div class="input-group">
+            <input type="text" id="model" class="input-box" placeholder="Model" value="gemma:2b">
+        </div>
         <div class="response-box" id="responseBox"></div>
         <div class="input-group">
             <textarea type="text" id="messageInput" class="input-box" placeholder="Type your message here" onkeydown="if (event.keyCode === 13 && !event.shiftKey) { event.preventDefault(); sendMessage(); }"></textarea>
-            <button type="submit" class="send-button" onclick="sendMessage()">Send</button>
+            <button type="submit" class="send-button" onclick="sendMessage()">
+                Send
+            </button>
         </div>
     </div>
     <script>
@@ -96,27 +102,35 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        "model": "gemma:2b",
+                        "model": model,
                         "prompt": message,
                         "stream": true
                     })
                 });
-
                 const decoder = new TextDecoder();
-
+                let rest = "";
                 responseBox.textContent = responseBox.textContent + "\nAI: ";
                 for await (const data of response.body) {
-                    const jsonData = decoder.decode(data);
-                    const chunk = JSON.parse(jsonData).response;
-                    chunk.replace(/\n/g, '');
-                    responseBox.textContent = responseBox.textContent + chunk;
+                    let jsonData = null;
+                    for (var chunk of decoder.decode(data).split('\n')) {
+                        chunk = rest + chunk;
+                        if (chunk.length === 0) {
+                            continue;
+                        }
+                        try {
+                            jsonData = JSON.parse(chunk).response;
+                            jsonData.replace(/\n/g, '');
+                            responseBox.textContent = responseBox.textContent + jsonData;
+                            rest = "";
+                        } catch (error) {
+                            rest = chunk;
+                        }
+                    }
                 }
                 responseBox.textContent = responseBox.textContent + "\n";
-                
             } catch (error) {
-                responseBox.textContent = 'Error: ' + error.message;
+                responseBox.textContent = responseBox.textContent + 'Error: ' + error.message;
             }
-
             document.querySelector('.send-button').disabled = false;
             document.querySelector('.send-button').style.backgroundColor = '#007bff';
         }
